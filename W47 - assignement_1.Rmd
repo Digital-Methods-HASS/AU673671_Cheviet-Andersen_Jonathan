@@ -1,0 +1,142 @@
+---
+title: "W47 assignment_1"
+author: "Jonathan Cheviet-Andersen"
+date: "30/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r libraries, echo = FALSE}
+## install.packages("gganimate")
+## install.packages("gifski")
+## install.packages("av")
+## install.packages("gapminder",repos = "http://cran.us.r-project.org")
+library(tidyverse)
+library(gganimate)
+library(gifski)
+library(av)
+library(gapminder)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+str(gapminder)
+unique(gapminder$year)
+head(gapminder)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+The dataset contains information on each country in the sampled year, its continent, life expectancy, population, and GDP per capita.
+
+Let's plot all the countries in 1952.
+```{r 1957}
+theme_set(theme_bw())  # set theme to white background for better visibility
+
+ggplot(subset(gapminder, year == 1952), aes(gdpPercap, lifeExp, size = pop)) +
+  geom_point() +
+  scale_x_log10() 
+
+```
+
+
+1. *Why does it make sense to have a log10 scale on x axis?*
+So we can see if a point is special. 
+2. *Who is the outlier (the richest country in 1952 - far right on x axis)?* 
+```{r}
+gapminder %>%
+  filter(year == 1952) %>%
+  select(country, gdpPercap) %>%
+  arrange(desc(gdpPercap))
+```
+Next, you can generate a similar plot for 2007 and compare the differences
+```{r 2007}
+ggplot(subset(gapminder, year == 2007), aes(gdpPercap, lifeExp, size = pop)) +
+  geom_point() +
+  scale_x_log10() 
+```
+
+The black bubbles are a bit hard to read, the comparison would be easier with a bit more visual differentiation.
+
+Tasks:
+
+3. *Differentiate the **continents** by color, and fix the axis labels and units to be more legible (**Hint**: the 2.50e+08 is so called "scientific notation", which you might want to eliminate)*
+```{r}
+ggplot(subset(gapminder, year == 2007), aes(gdpPercap, lifeExp, size = pop)) +
+  geom_point(aes(color = continent)) +
+  scale_x_log10()  
+  options(scipen=999)
+```
+
+
+4. *What are the five richest countries in the world in 2007?*
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  select(country, gdpPercap) %>%
+  arrange(desc(gdpPercap)) %>%
+  head(5)
+```
+
+
+5. *Can you add a title to one or both of the animations above that will change* 
+ *in sync with the animation?* *(**Hint**: search labeling for `transition_states()` and `transition_time()` functions respectively)*
+```{r anim2}
+anim2 <- ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop)) +
+  geom_point(aes(color= continent)) +
+  scale_x_log10() + # convert x to log scale
+  transition_time(year) +
+  ggtitle("Min graf") +
+  transition_time(year, range= NULL)
+anim2
+```
+
+6. *Can you made the axes' labels and units more readable? Consider expanding the abreviated lables as well as the scientific notation in the legend and x axis to whole numbers.*
+```{r}
+anim2 <- ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop)) +
+  geom_point() +
+  scale_x_log10() + # convert x to log scale
+  transition_time(year) +
+  ggtitle("Min graf") +
+  xlab("GDP, indkomst") +
+  ylab("Gennemsnitsalder") +
+  transition_time(year, range= NULL)
+anim2
+```
+
+
+7. *Come up with a question you want to answer using the gapminder data and write it down. Then, create a data visualisation that answers the question and explain how your visualization answers the question. (Example: you wish to see what was mean life expectancy across the continents in the year you were born versus your parents' birth years). [Hint: if you wish to have more data than is in the filtered gapminder, you can load either the `gapminder_unfiltered` dataset and download more at https://www.gapminder.org/data/ ]*
+
+# What will be the best country to be born in, in the year of 1987? 
+
+
+```{r, gapminder}
+gapminder2 <- gapminder %>%
+  mutate(lifemoneyindex = gdpPercap*lifeExp) %>% 
+  select(country,lifemoneyindex, year) %>%
+  filter(year==1987) %>% 
+  arrange(desc(lifemoneyindex)) %>% 
+  head(5)
+```
+
+head(gapminder2)
+```{r}
+ggplot(subset(gapminder2), aes(lifemoneyindex, year)) +
+  geom_point(aes(x = year, y = lifemoneyindex)) + 
+  ggtitle("Best place to be born") + xlab("Years (1952-2007)") + ylab("lifemoneyindex") + 
+  scale_x_log10() 
+```
+
